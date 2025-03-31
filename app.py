@@ -4,14 +4,6 @@ from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationChain
 from langchain_google_genai import ChatGoogleGenerativeAI
 import os
-from dotenv import load_dotenv
-
-# ✅ Load API Key Securely
-load_dotenv()
-GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GOOGLE_API_KEY:
-    st.error("⚠️ Google GenAI API key is missing! Add it to `.env` file.")
-    st.stop()
 
 # ✅ Configure AI Model with Memory
 genai.configure(api_key=GOOGLE_API_KEY)
