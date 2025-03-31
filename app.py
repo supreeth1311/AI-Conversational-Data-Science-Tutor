@@ -8,14 +8,14 @@ from dotenv import load_dotenv
 
 # ✅ Load API Key Securely
 load_dotenv()
-API_KEY = os.getenv("GEMINI_API_KEY")
-if not API_KEY:
+GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GOOGLE_API_KEY:
     st.error("⚠️ Google GenAI API key is missing! Add it to `.env` file.")
     st.stop()
 
 # ✅ Configure AI Model with Memory
-genai.configure(api_key=API_KEY)
-chat_model = ChatGoogleGenerativeAI(model="gemini-1.5-pro", google_api_key=API_KEY)
+genai.configure(api_key=GOOGLE_API_KEY)
+chat_model = ChatGoogleGenerativeAI(model="gemini-1.5-pro", google_api_key=GOOGLE_API_KEY)
 memory = ConversationBufferMemory()
 conversation = ConversationChain(llm=chat_model, memory=memory)
 
