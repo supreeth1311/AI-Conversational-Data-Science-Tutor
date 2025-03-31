@@ -3,7 +3,12 @@ import google.generativeai as genai
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationChain
 from langchain_google_genai import ChatGoogleGenerativeAI
-import os
+
+# ✅ Retrieve API Key from Streamlit Secrets
+GOOGLE_API_KEY = st.secrets["GEMINI_API_KEY"]
+if not GOOGLE_API_KEY:
+    st.error("⚠️ Google GenAI API key is missing in Streamlit secrets!")
+    st.stop()
 
 # ✅ Configure AI Model with Memory
 genai.configure(api_key=GOOGLE_API_KEY)
