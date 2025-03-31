@@ -20,8 +20,8 @@ memory = ConversationBufferMemory()
 conversation = ConversationChain(llm=chat_model, memory=memory)
 
 # ✅ Streamlit UI Setup
-st.set_page_config(page_title="AI Data Science Tutor", layout="wide")
-st.title("🤖 AI Data Science Tutor")
+st.set_page_config(page_title="AI Conversational Data Science Tutor", layout="wide")
+st.title("🤖 AI Conversational Data Science Tutor")
 st.write("Ask me anything about **Data Science!** 📊")
 
 # ✅ Store Chat History
