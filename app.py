@@ -1,60 +1,56 @@
 import streamlit as st
-import google.generativeai as genai
-from langchain.memory import ConversationBufferMemory
-from langchain.chains import ConversationChain
-from langchain_google_genai import ChatGoogleGenerativeAI
-from google.api_core.exceptions import ResourceExhausted
+from transformers import AutoTokenizer, AutoModelForCausalLM
+import torch
 
-# Retrieve the API key from Streamlit secrets
-GOOGLE_API_KEY = st.secrets["google"]["GEMINI_API_KEY"]
-if not GOOGLE_API_KEY:
-    st.error("⚠️ Google GenAI API key is missing in Streamlit secrets!")
-    st.stop()
+# -----------------------
+# Hugging Face API Key
+# -----------------------
+HF_API_KEY = st.secrets["huggingface"]["API_KEY"]
 
-# Configure API key
-genai.configure(api_key=GOOGLE_API_KEY)
+# -----------------------
+# Load Model
+# -----------------------
+model_name = "mosaicml/mpt-7b-instruct"  # Free instruction-following model
+tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=HF_API_KEY)
+model = AutoModelForCausalLM.from_pretrained(model_name, use_auth_token=HF_API_KEY)
 
-# Function to create conversation model with fallback
-def create_conversation(model_name):
-    chat_model = ChatGoogleGenerativeAI(model=model_name, google_api_key=GOOGLE_API_KEY)
-    memory = ConversationBufferMemory()
-    return ConversationChain(llm=chat_model, memory=memory)
+# Optional: use GPU if available
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model.to(device)
 
-# Try Pro first, fallback to Flash if ResourceExhausted
-try:
-    conversation = create_conversation("gemini-1.5-pro-latest")
-except ResourceExhausted:
-    st.warning("⚠️ Pro model quota exhausted. Switching to Flash model...")
-    conversation = create_conversation("gemini-1.5-flash-latest")
-
-# ✅ Streamlit UI Setup
+# -----------------------
+# Streamlit UI
+# -----------------------
 st.set_page_config(page_title="AI Conversational Data Science Tutor", layout="wide")
-st.title("🤖 AI Conversational Data Science Tutor")
+st.title("🤖 AI Conversational Data Science Tutor (Hugging Face)")
 st.write("Ask me anything about **Data Science!** 📊")
 
-# ✅ Store Chat History
+# -----------------------
+# Chat History
+# -----------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# ✅ Display Chat History
-for message in st.session_state.messages:
-    role = "👤 You" if message["role"] == "user" else "🤖 AI"
-    st.markdown(f"**{role}:** {message['content']}")
+# Display previous messages
+for msg in st.session_state.messages:
+    role = "👤 You" if msg["role"] == "user" else "🤖 AI"
+    st.markdown(f"**{role}:** {msg['content']}")
 
-# ✅ User Input
+# -----------------------
+# User Input
+# -----------------------
 user_input = st.text_input("Ask a Data Science question...")
 
 if user_input:
-    try:
-        # ✅ AI Response
-        response = conversation.run(user_input)
+    # Encode input and generate response
+    inputs = tokenizer(user_input, return_tensors="pt").to(device)
+    outputs = model.generate(**inputs, max_new_tokens=200)
+    answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-        # ✅ Store and Display Chat
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        st.session_state.messages.append({"role": "ai", "content": response})
-        st.markdown(f"**🤖 AI:** {response}")
+    # Store messages in session
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    st.session_state.messages.append({"role": "ai", "content": answer})
 
-        st.rerun()
-
-    except ResourceExhausted:
-        st.error("❌ Both Pro and Flash models have hit quota limits. Try again later or upgrade billing.")
+    # Display AI response
+    st.markdown(f"**🤖 AI:** {answer}")
+    st.rerun()
