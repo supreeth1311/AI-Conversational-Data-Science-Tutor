@@ -1,7 +1,7 @@
 import streamlit as st
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationChain
-from langchain_openai import ChatOpenAI
+from langchain.chat_models import ChatOpenAI  # updated import
 
 # Retrieve the OpenRouter API key from Streamlit secrets
 OPENROUTER_API_KEY = st.secrets["openrouter"]["API_KEY"]
@@ -19,7 +19,7 @@ def create_conversation(model_name):
     memory = ConversationBufferMemory()
     return ConversationChain(llm=chat_model, memory=memory, verbose=True)
 
-# Try Pro first, fallback to Flash if it fails
+# Try Pro first, fallback to Flash if fails
 try:
     conversation = create_conversation("google/gemini-pro")  # Gemini Pro
 except Exception as e:
@@ -46,6 +46,7 @@ if user_input:
     try:
         # Use invoke() for OpenRouter
         response = conversation.invoke({"input": user_input})
+        # response might be a dict or string
         answer = response["response"] if isinstance(response, dict) else str(response)
 
         # Store and display
