@@ -1,7 +1,8 @@
 import streamlit as st
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationChain
-from langchain.chat_models import ChatOpenAI  # updated import
+from langchain_community.chat_models import ChatOpenAI
+
 
 # Retrieve the OpenRouter API key from Streamlit secrets
 OPENROUTER_API_KEY = st.secrets["openrouter"]["API_KEY"]
