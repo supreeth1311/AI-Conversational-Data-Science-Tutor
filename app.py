@@ -1,60 +1,59 @@
 import streamlit as st
-import google.generativeai as genai
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationChain
-from langchain_google_genai import ChatGoogleGenerativeAI
-from google.api_core.exceptions import ResourceExhausted
+from langchain_openai import ChatOpenAI
 
-# Retrieve the API key from Streamlit secrets
-GOOGLE_API_KEY = st.secrets["google"]["GEMINI_API_KEY"]
-if not GOOGLE_API_KEY:
-    st.error("⚠️ Google GenAI API key is missing in Streamlit secrets!")
+# Retrieve the OpenRouter API key from Streamlit secrets
+OPENROUTER_API_KEY = st.secrets["openrouter"]["API_KEY"]
+if not OPENROUTER_API_KEY:
+    st.error("⚠️ OpenRouter API key is missing!")
     st.stop()
 
-# Configure API key
-genai.configure(api_key=GOOGLE_API_KEY)
-
-# Function to create conversation model with fallback
+# Function to create conversation model
 def create_conversation(model_name):
-    chat_model = ChatGoogleGenerativeAI(model=model_name, google_api_key=GOOGLE_API_KEY)
+    chat_model = ChatOpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=OPENROUTER_API_KEY,
+        model=model_name,  # Gemini model
+    )
     memory = ConversationBufferMemory()
-    return ConversationChain(llm=chat_model, memory=memory)
+    return ConversationChain(llm=chat_model, memory=memory, verbose=True)
 
-# Try Pro first, fallback to Flash if ResourceExhausted
+# Try Pro first, fallback to Flash if it fails
 try:
-    conversation = create_conversation("gemini-1.5-pro-latest")
-except ResourceExhausted:
-    st.warning("⚠️ Pro model quota exhausted. Switching to Flash model...")
-    conversation = create_conversation("gemini-1.5-flash-latest")
+    conversation = create_conversation("google/gemini-pro")  # Gemini Pro
+except Exception as e:
+    st.warning(f"⚠️ Pro model issue ({e}). Switching to Flash model...")
+    conversation = create_conversation("google/gemini-flash-1.5")  # Gemini Flash
 
-# ✅ Streamlit UI Setup
+# Streamlit UI
 st.set_page_config(page_title="AI Conversational Data Science Tutor", layout="wide")
 st.title("🤖 AI Conversational Data Science Tutor")
 st.write("Ask me anything about **Data Science!** 📊")
 
-# ✅ Store Chat History
+# Chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# ✅ Display Chat History
 for message in st.session_state.messages:
     role = "👤 You" if message["role"] == "user" else "🤖 AI"
     st.markdown(f"**{role}:** {message['content']}")
 
-# ✅ User Input
+# User input
 user_input = st.text_input("Ask a Data Science question...")
 
 if user_input:
     try:
-        # ✅ AI Response
-        response = conversation.run(user_input)
+        # Use invoke() for OpenRouter
+        response = conversation.invoke({"input": user_input})
+        answer = response["response"] if isinstance(response, dict) else str(response)
 
-        # ✅ Store and Display Chat
+        # Store and display
         st.session_state.messages.append({"role": "user", "content": user_input})
-        st.session_state.messages.append({"role": "ai", "content": response})
-        st.markdown(f"**🤖 AI:** {response}")
+        st.session_state.messages.append({"role": "ai", "content": answer})
+        st.markdown(f"**🤖 AI:** {answer}")
 
         st.rerun()
 
-    except ResourceExhausted:
-        st.error("❌ Both Pro and Flash models have hit quota limits. Try again later or upgrade billing.")
+    except Exception as e:
+        st.error(f"❌ Error: {e}")
