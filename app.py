@@ -18,7 +18,7 @@ def create_conversation(model_name):
     chat_model = ChatOpenAI(
         base_url="https://openrouter.ai/api/v1",
         api_key=OPENROUTER_API_KEY,
-        model=model_name,  # gemini-pro or gemini-flash-1.5
+        model=model_name,  # Correct Gemini 2.5 model IDs
     )
     memory = ConversationBufferMemory()
     return ConversationChain(llm=chat_model, memory=memory, verbose=True)
@@ -27,10 +27,10 @@ def create_conversation(model_name):
 # Try Pro first, fallback to Flash
 # -----------------------
 try:
-    conversation = create_conversation("gemini-pro")  # Gemini Pro
+    conversation = create_conversation("google/gemini-2.5-pro")  # Gemini 2.5 Pro
 except Exception as e:
     st.warning(f"⚠️ Pro model issue ({e}). Switching to Flash model...")
-    conversation = create_conversation("gemini-flash-1.5")  # Gemini Flash
+    conversation = create_conversation("google/gemini-2.5-flash")  # Gemini 2.5 Flash
 
 # -----------------------
 # Streamlit UI
