@@ -28,8 +28,8 @@ Users will submit Python code, and you should:
 # Ensure correct model naming
 #model_ds = genai.GenerativeModel(model_name="gemini-pro", system_instruction=sys_prompt_ds)
 #model_code = genai.GenerativeModel(model_name="gemini-pro", system_instruction=sys_prompt_code)
-model_ds = genai.GenerativeModel(model_name="gemini-1.5-pro-latest", system_instruction=sys_prompt_ds)
-model_code = genai.GenerativeModel(model_name="gemini-1.5-pro-latest", system_instruction=sys_prompt_code)
+model_ds = genai.GenerativeModel(model_name="gemini-2.0-flash", system_instruction=sys_prompt_ds)
+model_code = genai.GenerativeModel(model_name="gemini-2.0-flash", system_instruction=sys_prompt_code)
 
 st.title("AI Data Science/Code Assistant")
 
