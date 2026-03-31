@@ -2,7 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 
 # -----------------------
-# Google Gemini API Key
+# Gemini API Key
 # -----------------------
 GEMINI_API_KEY = st.secrets["gemini"]["API_KEY"]
 genai.configure(api_key=GEMINI_API_KEY)
@@ -13,9 +13,10 @@ genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 # -----------------------
-# Streamlit UI # ----------------------- 
-st.set_page_config(page_title="AI Conversational Data Science Tutor", layout="wide") 
-st.title("🤖 AI Conversational Data Science Tutor ")
+# Streamlit UI
+# -----------------------
+st.set_page_config(page_title="AI Conversational Data Science Tutor", layout="wide")
+st.title("🤖 AI Conversational Data Science Tutor (Gemini)")
 st.write("Ask me anything about **Data Science!** 📊")
 
 # -----------------------
@@ -35,14 +36,14 @@ for msg in st.session_state.messages:
 user_input = st.text_input("Ask a Data Science question...")
 
 if user_input:
-    # Generate response from Gemini
+    # Generate response using Gemini
     response = model.generate_content(user_input)
     answer = response.text
 
-    # Store messages
+    # Store messages in session
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.session_state.messages.append({"role": "ai", "content": answer})
 
-    # Display response
+    # Display AI response
     st.markdown(f"**🤖 AI:** {answer}")
     st.rerun()
