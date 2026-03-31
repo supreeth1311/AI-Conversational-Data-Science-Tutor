@@ -15,8 +15,13 @@ model = genai.GenerativeModel("gemini-1.5-flash")
 # UI
 # -----------------------
 st.set_page_config(page_title="AI Tutor", layout="wide")
-st.title("🤖 AI Data Science Tutor")
-st.write("Ask me anything about Data Science 📊")
+st.title("🤖 AI Data Science Tutor & Code Reviewer")
+
+# Mode selection (RESTORED FEATURE ✅)
+mode = st.selectbox(
+    "Choose Mode:",
+    ["Data Science Tutor 📊", "Code Reviewer 💻"]
+)
 
 # -----------------------
 # Chat History
@@ -24,26 +29,43 @@ st.write("Ask me anything about Data Science 📊")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Show old messages
+# Display messages
 for msg in st.session_state.messages:
-    if msg["role"] == "user":
-        st.markdown(f"**👤 You:** {msg['content']}")
-    else:
-        st.markdown(f"**🤖 AI:** {msg['content']}")
+    role = "👤 You" if msg["role"] == "user" else "🤖 AI"
+    st.markdown(f"**{role}:** {msg['content']}")
 
 # -----------------------
 # Input
 # -----------------------
-user_input = st.text_input("Ask a question...")
+user_input = st.text_area("Enter your question or code:")
 
-if user_input:
+if st.button("Submit") and user_input:
+    
+    # 🎯 Prompt Engineering based on mode
+    if mode == "Data Science Tutor 📊":
+        prompt = f"""
+        You are a helpful Data Science Tutor.
+        Explain concepts clearly with examples.
+
+        Question:
+        {user_input}
+        """
+    else:
+        prompt = f"""
+        You are an expert Python Code Reviewer.
+        Analyze the code, find errors, and suggest improvements.
+
+        Code:
+        {user_input}
+        """
+
     try:
-        response = model.generate_content(user_input)
+        response = model.generate_content(prompt)
         answer = response.text
     except Exception as e:
-        answer = "Error generating response. Check API key or internet."
+        answer = "⚠️ Error generating response. Check API key or internet."
 
-    # Save chat
+    # Save messages
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.session_state.messages.append({"role": "ai", "content": answer})
 
