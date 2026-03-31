@@ -9,7 +9,7 @@ genai.configure(api_key=st.secrets["gemini"]["API_KEY"])
 # -----------------------
 # Load Model
 # -----------------------
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-1.5-pro-latest")
 
 # -----------------------
 # UI
