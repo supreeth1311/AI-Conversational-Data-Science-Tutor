@@ -9,7 +9,7 @@ genai.configure(api_key=st.secrets["gemini"]["API_KEY"])
 # -----------------------
 # Load Model
 # -----------------------
-model = genai.GenerativeModel("gemini-pro")
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 # -----------------------
 # UI
@@ -41,27 +41,17 @@ submit = st.button("Submit")
 if submit and user_input.strip() != "":
 
     if mode == "Data Science Tutor 📊":
-        # Build chat history context
-        chat_history = "\n".join([f"{msg['role'].upper()}: {msg['content'][:200]}" for msg in st.session_state.messages[-6:]])
         prompt = f"""
         You are a helpful Data Science Tutor.
         Explain clearly with examples.
-
-        Chat History:
-        {chat_history}
 
         Question:
         {user_input}
         """
     else:
-        # Build chat history context
-        chat_history = "\n".join([f"{msg['role'].upper()}: {msg['content'][:200]}" for msg in st.session_state.messages[-6:]])
         prompt = f"""
         You are an expert Python Code Reviewer.
         Find errors and suggest improvements.
-
-        Chat History:
-        {chat_history}
 
         Code:
         {user_input}
@@ -83,9 +73,12 @@ if submit and user_input.strip() != "":
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.session_state.messages.append({"role": "ai", "content": answer})
 
+    st.rerun()
+
 # -----------------------
 # Display Messages
 # -----------------------
 for msg in st.session_state.messages:
     role = "👤 You" if msg["role"] == "user" else "🤖 AI"
-    st.markdown(f"**{role}:** {{msg['content']}}")
+    st.markdown(f"**{role}:** {msg['content']}")
+    
