@@ -53,4 +53,4 @@ if user_input:
 
     # Display AI response
     st.markdown(f"**🤖 AI:** {answer}")
-    st.rerun() goona to use gemmi api key 
+    st.rerun() 
