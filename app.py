@@ -29,10 +29,6 @@ mode = st.selectbox(
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display messages
-for msg in st.session_state.messages:
-    role = "👤 You" if msg["role"] == "user" else "🤖 AI"
-    st.markdown(f"**{role}:** {msg['content']}")
 
 # -----------------------
 # Input
@@ -64,6 +60,12 @@ if st.button("Submit") and user_input:
         answer = response.text
     except Exception as e:
         answer = "⚠️ Error generating response. Check API key or internet."
+
+    # Display messages
+for msg in st.session_state.messages:
+    role = "👤 You" if msg["role"] == "user" else "🤖 AI"
+    st.markdown(f"**{role}:** {msg['content']}")
+
 
     # Save messages
     st.session_state.messages.append({"role": "user", "content": user_input})
