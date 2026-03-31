@@ -31,7 +31,8 @@ Users will submit Python code, and you should:
 # -----------------------
 # UI
 # -----------------------
-st.title("AI Data Science/Code Assistant")
+st.set_page_config(page_title="AI DS & Code Assistant", layout="centered")
+st.title("🤖 AI Data Science/Code Assistant")
 
 option = st.selectbox("Choose your assistant:", ["Data Science Tutor", "Code Reviewer"])
 
@@ -40,28 +41,31 @@ user_prompt = st.text_area("Enter your query or Python code:", height=200)
 btn_click = st.button("Generate Answer")
 
 # -----------------------
-# MAIN LOGIC (FIXED)
+# MAIN LOGIC
 # -----------------------
 if btn_click:
     if user_prompt.strip():
         with st.spinner("Generating response... Please wait."):
             try:
-                # Combine prompt manually (instead of system_instruction)
-                if option == "Data Science Tutor":
-                    final_prompt = f"{sys_prompt_ds}\n\nUser:\n{user_prompt}"
-                else:
-                    final_prompt = f"{sys_prompt_code}\n\nUser:\n{user_prompt}"
+                # Select the appropriate system prompt based on user choice
+                current_sys_instruction = sys_prompt_ds if option == "Data Science Tutor" else sys_prompt_code
 
-                # ✅ FIX: use supported model + correct call
-                model = genai.GenerativeModel("models/text-bison-001")
+                # Initialize the Gemini model with system instructions
+                model = genai.GenerativeModel(
+                    model_name="gemini-1.5-flash",
+                    system_instruction=current_sys_instruction
+                )
 
-                response = model.generate_content(final_prompt)
+                # Generate the content
+                response = model.generate_content(user_prompt)
 
-                if response and hasattr(response, "text"):
+                # Check if the response was blocked or empty
+                if response and response.text:
                     st.success("✅ Response Generated!")
+                    st.markdown("---")
                     st.write(response.text)
                 else:
-                    st.error("❌ No response received. Please try again.")
+                    st.error("❌ The model could not generate a response. This might be due to safety filters.")
 
             except Exception as e:
                 st.error(f"🚨 An error occurred: {str(e)}")
