@@ -1,45 +1,66 @@
 import streamlit as st
-import google.generativeai as genai
-import os
-from dotenv import load_dotenv
+from groq import Groq
 
-# ✅ Load API Key Securely
-load_dotenv()
-API_KEY = os.getenv("GEMINI_API_KEY")
-if not API_KEY:
-    st.error("⚠️ Google GenAI API key is missing! Add it to `.env` file.")
-    st.stop()
+# -----------------------
+# Configure API Key
+# -----------------------
+client = Groq(api_key=st.secrets["groq"]["API_KEY"])
 
-# ✅ Configure AI Model with Memory
-genai.configure(api_key=API_KEY)
-chat_model = ChatGoogleGenerativeAI(model="gemini-1.5-pro", google_api_key=API_KEY)
-memory = ConversationBufferMemory()
-conversation = ConversationChain(llm=chat_model, memory=memory)
+# -----------------------
+# UI
+# -----------------------
+st.set_page_config(page_title="AI Tutor", layout="wide")
+st.title("🤖 AI Data Science Tutor & Code Reviewer")
 
-# ✅ Streamlit UI Setup
-st.set_page_config(page_title="AI Data Science Tutor", layout="wide")
-st.title("🤖 AI Data Science Tutor")
-st.write("Ask me anything about **Data Science!** 📊")
+mode = st.selectbox(
+    "Choose Mode:",
+    ["Data Science Tutor 📊", "Code Reviewer 💻"]
+)
 
-# ✅ Store Chat History
+# -----------------------
+# Chat History
+# -----------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# ✅ Display Chat History
-for message in st.session_state.messages:
-    role = "👤 You" if message["role"] == "user" else "🤖 AI"
-    st.markdown(f"**{role}:** {message['content']}")
+# -----------------------
+# Input
+# -----------------------
+user_input = st.text_area("Enter your question or code:")
+submit = st.button("Submit")
 
-# ✅ User Input
-user_input = st.text_input("Ask a Data Science question...")
+# -----------------------
+# Process
+# -----------------------
+if submit and user_input.strip() != "":
 
-if user_input:
-    # ✅ AI Response
-    response = conversation.run(user_input)
+    if mode == "Data Science Tutor 📊":
+        prompt = f"Explain clearly with examples:\n{user_input}"
+    else:
+        prompt = f"Review this code, find errors and fix:\n{user_input}"
 
-    # ✅ Store and Display Chat
+    try:
+        response = client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=[
+                {"role": "system", "content": "You are a helpful AI assistant."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        answer = response.choices[0].message.content
+
+    except Exception as e:
+        answer = f"⚠️ Error: {str(e)}"
+
+    # Save messages
     st.session_state.messages.append({"role": "user", "content": user_input})
-    st.session_state.messages.append({"role": "ai", "content": response})
-    st.markdown(f"**🤖 AI:** {response}")
+    st.session_state.messages.append({"role": "ai", "content": answer})
 
     st.rerun()
+
+# -----------------------
+# Display
+# -----------------------
+for msg in st.session_state.messages:
+    role = "👤 You" if msg["role"] == "user" else "🤖 AI"
+    st.markdown(f"**{role}:** {msg['content']}")
