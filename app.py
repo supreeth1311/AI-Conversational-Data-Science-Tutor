@@ -13,10 +13,9 @@ genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 # -----------------------
-# Streamlit UI
-# -----------------------
-st.set_page_config(page_title="AI Conversational Data Science Tutor", layout="wide")
-st.title("🤖 AI Conversational Data Science Tutor (Gemini)")
+# Streamlit UI # ----------------------- 
+st.set_page_config(page_title="AI Conversational Data Science Tutor", layout="wide") 
+st.title("🤖 AI Conversational Data Science Tutor ")
 st.write("Ask me anything about **Data Science!** 📊")
 
 # -----------------------
