@@ -53,7 +53,7 @@ if btn_click:
                     final_prompt = f"{sys_prompt_code}\n\nUser:\n{user_prompt}"
 
                 # ✅ FIX: use supported model + correct call
-                model = genai.GenerativeModel("gemini-1.5-flash")
+                model = genai.GenerativeModel("models/text-bison-001")
 
                 response = model.generate_content(final_prompt)
 
