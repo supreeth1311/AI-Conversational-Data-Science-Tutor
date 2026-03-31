@@ -1,84 +1,48 @@
 import streamlit as st
 import google.generativeai as genai
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationChain
+from langchain_google_genai import ChatGoogleGenerativeAI
+import os
+from dotenv import load_dotenv
 
-# -----------------------
-# Configure API Key
-# -----------------------
-genai.configure(api_key=st.secrets["gemini"]["API_KEY"])
+# ✅ Load API Key Securely
+load_dotenv()
+API_KEY = os.getenv("GEMINI_API_KEY")
+if not API_KEY:
+    st.error("⚠️ Google GenAI API key is missing! Add it to `.env` file.")
+    st.stop()
 
-# -----------------------
-# Load Model
-# -----------------------
-model = genai.GenerativeModel("models/gemini-1.5-flash")
+# ✅ Configure AI Model with Memory
+genai.configure(api_key=API_KEY)
+chat_model = ChatGoogleGenerativeAI(model="gemini-1.5-pro", google_api_key=API_KEY)
+memory = ConversationBufferMemory()
+conversation = ConversationChain(llm=chat_model, memory=memory)
 
-# -----------------------
-# UI
-# -----------------------
-st.set_page_config(page_title="AI Tutor", layout="wide")
-st.title("🤖 AI Data Science Tutor & Code Reviewer")
+# ✅ Streamlit UI Setup
+st.set_page_config(page_title="AI Data Science Tutor", layout="wide")
+st.title("🤖 AI Data Science Tutor")
+st.write("Ask me anything about **Data Science!** 📊")
 
-mode = st.selectbox(
-    "Choose Mode:",
-    ["Data Science Tutor 📊", "Code Reviewer 💻"]
-)
-
-# -----------------------
-# Chat History
-# -----------------------
+# ✅ Store Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# -----------------------
-# Input
-# -----------------------
-user_input = st.text_area("Enter your question or code:")
+# ✅ Display Chat History
+for message in st.session_state.messages:
+    role = "👤 You" if message["role"] == "user" else "🤖 AI"
+    st.markdown(f"**{role}:** {message['content']}")
 
-submit = st.button("Submit")
+# ✅ User Input
+user_input = st.text_input("Ask a Data Science question...")
 
-# -----------------------
-# Process Input
-# -----------------------
-if submit and user_input.strip() != "":
+if user_input:
+    # ✅ AI Response
+    response = conversation.run(user_input)
 
-    if mode == "Data Science Tutor 📊":
-        prompt = f"""
-        You are a helpful Data Science Tutor.
-        Explain clearly with examples.
-
-        Question:
-        {user_input}
-        """
-    else:
-        prompt = f"""
-        You are an expert Python Code Reviewer.
-        Find errors and suggest improvements.
-
-        Code:
-        {user_input}
-        """
-
-    try:
-        response = model.generate_content(prompt)
-
-        # 🔥 FIX: ensure response text exists
-        if response and hasattr(response, "text"):
-            answer = response.text
-        else:
-            answer = "⚠️ No response from AI."
-
-    except Exception as e:
-        answer = f"⚠️ Error: {str(e)}"
-
-    # Store messages
+    # ✅ Store and Display Chat
     st.session_state.messages.append({"role": "user", "content": user_input})
-    st.session_state.messages.append({"role": "ai", "content": answer})
+    st.session_state.messages.append({"role": "ai", "content": response})
+    st.markdown(f"**🤖 AI:** {response}")
 
     st.rerun()
-
-# -----------------------
-# Display Messages
-# -----------------------
-for msg in st.session_state.messages:
-    role = "👤 You" if msg["role"] == "user" else "🤖 AI"
-    st.markdown(f"**{role}:** {msg['content']}")
-    
