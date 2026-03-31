@@ -1,8 +1,5 @@
 import streamlit as st
 import google.generativeai as genai
-
-from langchain.chains import ConversationChain
-from langchain_google_genai import ChatGoogleGenerativeAI
 import os
 from dotenv import load_dotenv
 
