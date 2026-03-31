@@ -1,66 +1,59 @@
 import streamlit as st
-from groq import Groq
+import google.generativeai as genai
+import os
 
-# -----------------------
-# Configure API Key
-# -----------------------
-client = Groq(api_key=st.secrets["groq"]["API_KEY"])
+# Securely fetch API key from environment variable
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# -----------------------
-# UI
-# -----------------------
-st.set_page_config(page_title="AI Tutor", layout="wide")
-st.title("🤖 AI Data Science Tutor & Code Reviewer")
+if not GOOGLE_API_KEY:
+    st.error("❌ API Key is missing! Set GOOGLE_API_KEY in your environment or Streamlit Secrets.")
+else:
+    genai.configure(api_key=GOOGLE_API_KEY)
 
-mode = st.selectbox(
-    "Choose Mode:",
-    ["Data Science Tutor 📊", "Code Reviewer 💻"]
-)
+sys_prompt_ds = """You are a helpful AI Tutor for Data Science.
+Students will ask you doubts related to various topics in data science.
+You are expected to reply in as much detail as possible.
+Make sure to take examples while explaining a concept.
+In case a student asks any question outside the data science scope,
+politely decline and tell them to ask the question from the data science domain only."""
 
-# -----------------------
-# Chat History
-# -----------------------
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+sys_prompt_code = """You are a professional AI Code Reviewer.
+Users will submit Python code, and you should:
+1. Analyze it for potential bugs, errors, and inefficiencies.
+2. Provide a fixed version of the code.
+3. Explain the necessary changes and improvements.
+4. Do not provide assistance for non-Python code.
+"""
 
-# -----------------------
-# Input
-# -----------------------
-user_input = st.text_area("Enter your question or code:")
-submit = st.button("Submit")
+# Ensure correct model naming
+#model_ds = genai.GenerativeModel(model_name="gemini-pro", system_instruction=sys_prompt_ds)
+#model_code = genai.GenerativeModel(model_name="gemini-pro", system_instruction=sys_prompt_code)
+model_ds = genai.GenerativeModel(model_name="gemini-1.5-pro-latest", system_instruction=sys_prompt_ds)
+model_code = genai.GenerativeModel(model_name="gemini-1.5-pro-latest", system_instruction=sys_prompt_code)
 
-# -----------------------
-# Process
-# -----------------------
-if submit and user_input.strip() != "":
+st.title("AI Data Science/Code Assistant")
 
-    if mode == "Data Science Tutor 📊":
-        prompt = f"Explain clearly with examples:\n{user_input}"
+option = st.selectbox("Choose your assistant:", ["Data Science Tutor", "Code Reviewer"])
+
+user_prompt = st.text_area("Enter your query or Python code:", height=200)
+
+btn_click = st.button("Generate Answer")
+
+if btn_click:
+    if user_prompt.strip():  # Ensure input is not empty
+        with st.spinner("Generating response... Please wait."):
+            try:
+                if option == "Data Science Tutor":
+                    response = model_ds.generate_content(user_prompt)
+                else:
+                    response = model_code.generate_content(user_prompt)
+
+                if response and hasattr(response, "text"):
+                    st.success("✅ Response Generated!")
+                    st.write(response.text)
+                else:
+                    st.error("❌ No response received. Please try again.")
+            except Exception as e:
+                st.error(f"🚨 An error occurred: {str(e)}")
     else:
-        prompt = f"Review this code, find errors and fix:\n{user_input}"
-
-    try:
-        response = client.chat.completions.create(
-            model="openai/gpt-oss-120b",
-            messages=[
-                {"role": "system", "content": "You are a helpful AI assistant."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        answer = response.choices[0].message.content
-
-    except Exception as e:
-        answer = f"⚠️ Error: {str(e)}"
-
-    # Save messages
-    st.session_state.messages.append({"role": "user", "content": user_input})
-    st.session_state.messages.append({"role": "ai", "content": answer})
-
-    st.rerun()
-
-# -----------------------
-# Display
-# -----------------------
-for msg in st.session_state.messages:
-    role = "👤 You" if msg["role"] == "user" else "🤖 AI"
-    st.markdown(f"**{role}:** {msg['content']}")
+        st.warning("⚠️ Please enter a valid query or Python code!")
